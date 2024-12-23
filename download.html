@@ -216,9 +216,10 @@
     
     <script>
         let nodes = [
-            "123movdltest"
+            "rain-short-marquess"
         ]
         let randomNode = nodes[Math.floor(Math.random() * nodes.length)];
+        fetch(`https://${randomNode}.glitch.me/`)
 
         const getQueryParameter = (name) => {
             const urlParams = new URLSearchParams(window.location.search);
