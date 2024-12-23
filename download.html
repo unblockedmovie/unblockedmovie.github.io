@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blank</title>
+    <style>
+        /* Basic reset and font settings */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            color: #f3f3f3;
+        }
+
+        /* Form container */
+        .form-container {
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 40px;
+        }
+
+        .form-container input, 
+        .form-container select, 
+        .form-container button {
+            padding: 10px;
+            margin: 15px;
+            font-size: 16px;
+            width: 320px;
+            background-color: #333;
+            color: #f3f3f3;
+            border: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .form-container button:hover,
+        .form-container input:focus, 
+        .form-container select:focus {
+            background-color: #555;
+        }
+
+        /* Status and movie info */
+        .status {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        .status p {
+            font-size: 18px;
+        }
+
+        #movieInfo {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #movieInfo img {
+            max-width: 1200px;
+            margin-top: 10px;
+            border-radius: 8px;
+        }
+
+        video {
+            max-width: 1200px;
+            margin-top: 10px;
+        }
+
+        /* Resolution buttons */
+        .movitem {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #2c2c2c;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            width: 200px;
+            text-align: center;
+        }
+
+        .movimg {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .movitem:hover {
+            transform: scale(1.05);
+            box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .movtitle {
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+            margin-top: 10px;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+            max-width: 180px; /* Restrict title length */
+        }
+
+        #suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: flex-start;
+            padding: 10px;
+        }
+
+        /* Progress bar and download button */
+        progress {
+            width: 100%;
+            height: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+            background-color: #444;
+            border: none;
+        }
+
+        progress[value]::-webkit-progress-bar {
+            background-color: #333;
+        }
+
+        progress[value]::-webkit-progress-value {
+            background-color: #00aeff;
+        }
+
+        #downloadready {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #00aeff;
+        }
+
+        #downloadready:hover {
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        /* Links */
+        a {
+            color: #00aeff;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .spinner {
+        width: 40px; /* Set the width to your desired size */
+        height: 40px; /* Set the height to your desired size */
+    }
+    </style>
+</head>
+
+<body>
+
+    <h1 id="dlname"></h1>
+
+    <div class="form-container">
+
+        <div id="movieinfoload" style="display: none;">
+            <span>Loading video information</span>
+            <br>
+            <img class="spinner" src="https://cdn.glitch.global/184a66ff-fa51-4ace-99ce-0e56303a65c9/loading%20(1).gif?v=1732948714008" alt="Loading...">
+        </div>
+        <div id="movieInfo" style="display: none;">
+            <p id="movieName"></p>
+            <p id="movieDesc"></p>
+            <img id="movieThumbnail" src=""/>
+        </div>
+        <video id="video" controls style="display: none;"></video>
+
+        <div id="resloading" style="display: none;">
+            <span>Loading Streaming Server</span>
+            <br>
+            <img class="spinner" src="https://cdn.glitch.global/184a66ff-fa51-4ace-99ce-0e56303a65c9/loading%20(1).gif?v=1732948714008" alt="Loading...">
+        </div>
+        
+        <button onclick="realdownload()" id="downloadBtn" style="display: none">Start Download</button>
+        <div id="resolutionSelect" style="display: none;">
+
+        </div>
+        <br>
+        <p id="doing" style="display: none">Waiting for download url.</p>
+        <progress id="downloadProgress" value="0" max="100" style="display: none"></progress>
+        <a id="downloadready" style="display: none">Download Ready!</a>
+        <br>
+        <br>
+        <br>
+        <a href="/">Back to home</a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    
+    <script>
+        let nodes = [
+            "123movdltest"
+        ]
+        let randomNode = nodes[Math.floor(Math.random() * nodes.length)];
+
+        const getQueryParameter = (name) => {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        };
+
+        document.getElementById("dlname").textContent = getQueryParameter("name")
+        let vidurl = getQueryParameter("l")
+        const moviename = getQueryParameter("name")
+        const filename = moviename + ".ts"
+
+
+        function LoadStreaming() {
+            document.getElementById("movieinfoload").style.display = ""
+
+            if (vidurl.includes("/movie/")) {
+                vidurl = vidurl.replace("/movie/", "/watch-movie/")
+            }
+
+            const eventSource = new EventSource(`https://${randomNode}.glitch.me/startdownload?link=${encodeURIComponent(vidurl)}&movname=${encodeURIComponent(getQueryParameter("name"))}`);
+            
+            let movname = ""
+            eventSource.onmessage = function (event) {
+                const data = JSON.parse(event.data);
+
+                if (data.movieinfo) {
+                    document.getElementById('movieName').textContent = data.movieinfo[0];
+                    movname = data.movieinfo[0]
+                    document.getElementById('movieDesc').textContent = data.movieinfo[1];
+                    document.getElementById('movieThumbnail').src = data.movieinfo[2];
+                    document.getElementById("movieInfo").style.display = ""
+                    document.getElementById("movieinfoload").style.display = "none"
+                    document.getElementById("resloading").style.display = ""
+                }
+
+                if (data.message) {
+                    console.log(data.message)
+                }
+
+                if (data.error) {
+                    eventSource.close();
+                }
+
+                if (data.res) {
+                    document.getElementById("resloading").style.display = "none"
+                    window.res = data.res
+                    realstream(data.res[0][1])
+                }
+
+            };
+
+            eventSource.onerror = function () {
+                eventSource.close();
+            };
+        }
+        LoadStreaming()
+
+        function parseM3U8(text) {
+            const segments = [];
+            
+            // Split the text into lines
+            const lines = text.split('\n');
+            
+            for (const line of lines) {
+                const trimmedLine = line.trim();
+                // Skip lines starting with '#' as they are metadata or comments
+                if (!trimmedLine.startsWith('#') && trimmedLine.includes("https://")) {
+                segments.push(trimmedLine);
+                }
+            }
+            
+            return segments;
+        }
+
+        async function realdownload() {
+            const indexm3u8 = window.idxlol
+    document.getElementById("doing").style.display = "";
+    document.getElementById("downloadProgress").style.display = "";
+    document.getElementById("doing").textContent = "Loading Index file";
+    console.log(indexm3u8);
+
+    // Fetch the m3u8 file and parse it
+    const r = await fetch(decodeURIComponent(indexm3u8));
+    const idxtxt = await r.text();
+    const parsed = parseM3U8(idxtxt);
+    console.log(parsed);
+
+    let bytesDownloaded = 0;  // Track total bytes downloaded
+    let totalBytes = 0;       // Track total bytes for progress calculation
+    let totalChunks = 0;      // Track total chunks downloaded
+
+    // Create a progress bar to track download progress
+    const progressBar = document.getElementById("downloadProgress");
+    const progressText = document.getElementById("doing"); // Display text for progress
+
+    // Prepare the array to hold all chunks
+    const chunkArray = [];
+
+    // Function to update the progress bar and text
+    function updateProgress() {
+        const chunkPercentage = parsed.length > 0 ? (totalChunks / parsed.length) * 100 : 0;
+        const bytesInMB = bytesDownloaded / (1024 * 1024);
+        const totalMB = totalBytes / (1024 * 1024);
+        progressBar.max = parsed.length;
+        progressBar.value = totalChunks;
+        progressText.textContent = `Downloaded ${totalMB.toFixed(2)} MB (${totalChunks}/${parsed.length} chunks) - ${chunkPercentage.toFixed(2)}%`;
+        document.title = `${getQueryParameter("name")} - ${chunkPercentage.toFixed(2)}%`
+    }
+
+
+    // Function to download chunks in batches of 10 (concurrent threads)
+        async function downloadChunksInBatches(chunks) {
+        const batchSize = 10;
+        const maxRetries = 3; // Maximum retry attempts for each chunk
+
+        for (let i = 0; i < chunks.length; i += batchSize) {
+            const batch = chunks.slice(i, i + batchSize); // Slice out a batch of 10 chunks
+            const batchResults = await Promise.all(batch.map(async (i) => {
+                let retries = 0;
+                let success = false;
+                let cb;
+
+                // Retry logic
+                while (!success && retries < maxRetries) {
+                    try {
+                        const c = await fetch(i);
+                        cb = await c.blob();
+                        const blobSize = cb.size;
+
+                        totalBytes += blobSize; // Add to total bytes
+                        totalChunks += 1; // Increment total chunks
+                        bytesDownloaded += blobSize; // Increment downloaded bytes
+
+                        updateProgress(); // Update progress display
+
+                        success = true; // If we reach here, the download was successful
+                    } catch (error) {
+                        retries++;
+                        console.error(`Download failed for chunk ${i}, attempt ${retries} of ${maxRetries}`);
+                        if (retries === maxRetries) {
+                            console.error(`Failed to download chunk ${i} after ${maxRetries} attempts`);
+                            // Optionally, handle the failure case (e.g., log, alert, etc.)
+                        }
+                    }
+                }
+
+                return cb;
+            }));
+
+            chunkArray.push(...batchResults); // Add batch results to the chunk array
+        }
+    }
+
+    // Start downloading the chunks in batches of 5
+    await downloadChunksInBatches(parsed);
+
+    // Combine all downloaded chunks into a single Blob
+    const fileBlob = new Blob(chunkArray);
+
+    // Prepare the download link
+    const downloadLink = document.getElementById("downloadready");
+    downloadLink.href = URL.createObjectURL(fileBlob);
+    downloadLink.download = filename;
+    downloadLink.click();
+    downloadLink.style.display = "";
+
+    document.getElementById("doing").textContent = filename + " is ready to download below!";
+}
+
+
+
+        async function realstream(indexm3u8) {
+
+            var video = document.getElementById('video');
+            var videoSrc = decodeURIComponent(indexm3u8);
+            video.style.display = ""
+            document.getElementById("movieInfo").style.display = "none"
+            document.getElementById("resolutionSelect").style.display = "none"
+            if (Hls.isSupported()) {
+                var hls = new Hls();
+                hls.loadSource(videoSrc);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    video.play();
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = videoSrc;
+                video.addEventListener('loadedmetadata', function() {
+                    video.play();
+                });
+            } else {
+                console.error('HLS is not supported in this browser');
+            }
+
+            window.idxlol = indexm3u8
+
+            document.getElementById("downloadBtn").style.display = ""
+        }
+
+
+        function populateResolutions(resolutions, movname, streaming) {
+            console.log(resolutions)
+
+            const resolutionSelect = document.getElementById('resolutionSelect');
+            let h = ""
+            for (const i of resolutions) {
+
+                if (streaming) {
+                      h += `<button onclick="realstream('${encodeURIComponent(i[1])}')">${i[0]}p</button>`
+                } else {
+                      h += `<button onclick="realdownload('${encodeURIComponent(i[1])}')">${i[0]}p</button>`
+                }
+   
+              
+            }
+
+            resolutionSelect.innerHTML = h
+
+            // Enable the resolution select dropdown and the download button
+            resolutionSelect.disabled = false;
+            document.getElementById('downloadBtn').disabled = false;
+        }
+    </script>
+
+</body>
+
+</html>

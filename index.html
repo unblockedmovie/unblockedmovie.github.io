@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blank</title>
+    <style>
+        /* Basic reset and font settings */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            color: #f3f3f3;
+        }
+
+        /* Form container */
+        .form-container {
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 40px;
+        }
+
+        .form-container input, 
+        .form-container select, 
+        .form-container button {
+            padding: 10px;
+            margin: 15px;
+            font-size: 16px;
+            width: 320px;
+            background-color: #333;
+            color: #f3f3f3;
+            border: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .form-container button:hover,
+        .form-container input:focus, 
+        .form-container select:focus {
+            background-color: #555;
+        }
+
+        /* Status and movie info */
+        .status {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+        .status p {
+            font-size: 18px;
+        }
+
+        #movieInfo {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #movieInfo img {
+            max-width: 1200px;
+            margin-top: 10px;
+            border-radius: 8px;
+        }
+
+        /* Resolution buttons */
+        .movitem {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #2c2c2c;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            width: 200px;
+            text-align: center;
+        }
+
+        .movimg {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .movitem:hover {
+            transform: scale(1.05);
+            box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .movtitle {
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+            margin-top: 10px;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+            max-width: 180px; /* Restrict title length */
+        }
+
+        #suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: flex-start;
+            padding: 10px;
+        }
+
+        /* Progress bar and download button */
+        progress {
+            width: 100%;
+            height: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+            background-color: #444;
+            border: none;
+        }
+
+        progress[value]::-webkit-progress-bar {
+            background-color: #333;
+        }
+
+        progress[value]::-webkit-progress-value {
+            background-color: #00aeff;
+        }
+
+        #downloadready {
+            text-align: center;
+            display: none;
+            font-size: 1.2rem;
+            color: #00aeff;
+        }
+
+        #downloadready:hover {
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        /* Links */
+        a {
+            color: #00aeff;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+            .spinner {
+        width: 40px; /* Set the width to your desired size */
+        height: 40px; /* Set the height to your desired size */
+    }
+
+    </style>
+</head>
+
+<body>
+
+
+    <div class="form-container">
+        <input type="text" id="movieUrl" placeholder="?"/>
+        <div id="suggestions">
+            
+        </div>
+    </div>
+
+    <script>
+        let nodes = [
+            "123movdltest"
+        ]
+        let randomNode = nodes[Math.floor(Math.random() * nodes.length)];
+
+
+        const input = document.getElementById("movieUrl");
+        const suggestionsBox = document.getElementById("suggestions");
+
+        const fetchMovies = async (query) => {
+            if (!query.trim()) {
+                suggestionsBox.innerHTML = ""; // Clear suggestions for empty input
+                return;
+            }
+
+            const url = `https://${randomNode}.glitch.me/search?q=${encodeURIComponent(query)}`;
+            
+            try {
+                suggestionsBox.innerHTML = `<img class="spinner" src="https://cdn.glitch.global/184a66ff-fa51-4ace-99ce-0e56303a65c9/loading%20(1).gif?v=1732948714008" alt="Loading...">`
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (query != input.value) {
+                    return
+                }
+
+                if (response.ok) {
+                    displaySuggestions(data);
+                } else {
+                    suggestionsBox.innerHTML = "<div>No results found</div>";
+                }
+            } catch (error) {
+                console.error("Error fetching movies:", error);
+                suggestionsBox.innerHTML = "<div>Error fetching data</div>";
+            }
+            };
+
+        const displaySuggestions = (movies) => {
+            let h = ""
+            for (const i of movies) {
+                console.log(i)
+                h += `
+                <a class="movitem" href="/download.html?l=${encodeURIComponent(i.link)}&name=${encodeURIComponent(i.title)}">
+                    <img src=${i.image} class="movimg">
+                    <p class="movtitle">${i.title}</p>
+                </a>
+                `
+            }
+            suggestionsBox.innerHTML = h
+        };
+
+        input.addEventListener("input", (e) => {
+            fetchMovies(e.target.value);
+        });
+
+
+    </script>
+
+</body>
+
+</html>
