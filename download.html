@@ -199,9 +199,6 @@
         </div>
         
         <button onclick="realdownload()" id="downloadBtn" style="display: none">Start Download</button>
-        <div id="resolutionSelect" style="display: none;">
-
-        </div>
         <br>
         <p id="doing" style="display: none">Waiting for download url.</p>
         <progress id="downloadProgress" value="0" max="100" style="display: none"></progress>
@@ -216,7 +213,7 @@
     
     <script>
         let nodes = [
-            "rain-short-marquess"
+            "pointed-east-chard"
         ]
         let randomNode = nodes[Math.floor(Math.random() * nodes.length)];
         fetch(`https://${randomNode}.glitch.me/`)
@@ -263,10 +260,9 @@
                     eventSource.close();
                 }
 
-                if (data.res) {
+                if (data.playlist) {
                     document.getElementById("resloading").style.display = "none"
-                    window.res = data.res
-                    realstream(data.res[0][1])
+                    realstream(data.playlist)
                 }
 
             };
@@ -397,7 +393,6 @@
             var videoSrc = decodeURIComponent(indexm3u8);
             video.style.display = ""
             document.getElementById("movieInfo").style.display = "none"
-            document.getElementById("resolutionSelect").style.display = "none"
             if (Hls.isSupported()) {
                 var hls = new Hls();
                 hls.loadSource(videoSrc);
@@ -419,29 +414,6 @@
             document.getElementById("downloadBtn").style.display = ""
         }
 
-
-        function populateResolutions(resolutions, movname, streaming) {
-            console.log(resolutions)
-
-            const resolutionSelect = document.getElementById('resolutionSelect');
-            let h = ""
-            for (const i of resolutions) {
-
-                if (streaming) {
-                      h += `<button onclick="realstream('${encodeURIComponent(i[1])}')">${i[0]}p</button>`
-                } else {
-                      h += `<button onclick="realdownload('${encodeURIComponent(i[1])}')">${i[0]}p</button>`
-                }
-   
-              
-            }
-
-            resolutionSelect.innerHTML = h
-
-            // Enable the resolution select dropdown and the download button
-            resolutionSelect.disabled = false;
-            document.getElementById('downloadBtn').disabled = false;
-        }
     </script>
 
 </body>
